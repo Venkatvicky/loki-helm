@@ -10,6 +10,11 @@ data:
       grpc_listen_port: 9095
       log_level: info
 
+    querier:
+      query_timeout: 1m
+      max_query_parallelism: 32
+      query_ingester_streams: true
+
     distributor:
       ring:
         kvstore:
