@@ -62,3 +62,11 @@ bloomGateway:
 ingress:
   enabled: true
   host: loki.cloudmasa.com
+  # TLS configuration
+  tls:
+    enabled: true
+    secretName: loki-tls-secret # Name of the Kubernetes secret containing the SSL certificate (CRT)
+    certManager: true  # Use cert-manager if available (can be set to false if not needed)
+
+# Set to true if you are using cert-manager for automatic certificate management
+certManager
