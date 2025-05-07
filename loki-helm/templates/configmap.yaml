@@ -4,4 +4,29 @@ metadata:
   name: {{ include "loki.fullname" . }}-config
 data:
   loki.yaml: |
-    {{ .Values.loki | toYaml | nindent 4 }}
+    server:
+      http_listen_port: 3100
+      grpc_listen_port: 9095
+      log_level: info
+
+    distributor:
+      ring:
+        kvstore:
+          store: inmemory
+      shard_by_all_labels: true
+
+    storage_config:
+      boltdb_shipper:
+        active_index_directory: /tmp/loki/index
+        cache_location: /tmp/loki/cache
+        resync_interval: 1m
+
+    schema_config:
+      configs:
+        - from: 2020-10-24
+          store: boltdb
+          object_store: filesystem
+          schema: v11
+          index:
+            prefix: index_
+            period: 168h
