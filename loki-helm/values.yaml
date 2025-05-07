@@ -78,6 +78,9 @@ persistence:
   resources:
     requests:
       storage: 10Gi
+  # Ensure volume permissions are correct by setting security context
+  securityContext:
+    fsGroup: 10001  # Ensure the correct file system group to avoid permission issues
 
 # Resources section
 resources:
@@ -87,3 +90,41 @@ resources:
   requests:
     cpu: "500m"
     memory: "1Gi"
+
+# Additional Loki configuration for better storage and security
+extraVolumeMounts:
+  - name: loki-data
+    mountPath: /data  # Path to be mounted in the Loki container
+extraVolumes:
+  - name: loki-data
+    persistentVolumeClaim:
+      claimName: loki-pvc  # Make sure PVC name matches
+
+# PersistentVolumeClaim definition for data storage (manual PV setup)
+persistentVolumeClaim:
+  enabled: true
+  storageClassName: "manual"  # Match this with your storage class name
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+# Security Context for Loki to ensure it runs with correct user/group permissions
+securityContext:
+  runAsUser: 10001  # User ID for Loki container (ensure Loki has correct permissions)
+  fsGroup: 10001     # Group ID for Loki container (ensure it has permissions to write to the mounted volume)
+
+# Loki's storage setup in Kubernetes
+persistence:
+  enabled: true
+  storageClassName: "manual"  # Should match with your actual PV's storage class
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  # Optionally, set owner for persistent volumes (if required)
+  volumePermissions:
+    enabled: true  # Enable volume permissions
+    fsGroup: 10001  # Specify the correct fsGroup to allow Loki container to access the volume
