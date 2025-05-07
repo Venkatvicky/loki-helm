@@ -1,44 +1,47 @@
 loki:
-  config:
-    # Replace with your custom Loki config
-    server:
-      http_listen_port: 3100
-      grpc_listen_port: 9095
-    schema_config:
-      configs:
-        - from: 2024-06-01
-          store: tsdb
-          object_store: filesystem  # Changed from 's3' to 'filesystem'
-          schema: v13
-          index:
-            prefix: loki_index_
-            period: 24h
-    ingester:
-      chunk_encoding: snappy
-      max_chunk_age: 1h  # Optional: max chunk age before flushing
-      chunk_target_size: 1048576  # Optional: target chunk size
-    query_range:
-      results_cache:
-        enabled: true
-        expiration: 10m
-      max_retries: 5
-    compactor:
-      compaction_interval: 1h
-    distributor:
-      ring:
-        kvstore:
-          store: consul  # Or use etcd, depending on your setup
-    storage_config:
-      filesystem:
-        directory: /data/loki/chunks  # Set an appropriate path
-    alertmanager_config:
-      alertmanager_url: "http://alertmanager:9093"
-    limits_config:
-      ingestion_rate_mb: 5  # Adjust this limit based on your needs
-    tracing:
-      enabled: true
+  schema_config:
+    configs:
+      - from: 2024-06-01
+        store: tsdb
+        object_store: filesystem  # Changed from 's3' to 'filesystem'
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
 
-# Replicas configuration
+  ingester:
+    chunk_encoding: snappy
+    max_chunk_age: 1h  # Optional: max chunk age before flushing
+    chunk_target_size: 1048576  # Optional: target chunk size
+
+  query_range:
+    results_cache:
+      enabled: true
+      expiration: 10m
+    max_retries: 5
+
+  compactor:
+    compaction_interval: 1h
+
+  distributor:
+    ring:
+      kvstore:
+        store: consul  # Or use etcd, depending on your setup
+
+  storage_config:
+    filesystem:
+      directory: /data/loki/chunks  # Set an appropriate path for local filesystem storage
+
+  alertmanager_config:
+    alertmanager_url: "http://alertmanager:9093"
+
+  limits_config:
+    ingestion_rate_mb: 5  # Adjust this limit based on your needs
+
+  tracing:
+    enabled: true
+
+# Deployment configuration
 deploymentMode: SimpleScalable
 
 # Backend services replicas
