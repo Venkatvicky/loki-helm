@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "loki.fullname" . }}-querier
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: {{ .Values.querier.replicas }}
   selector:
