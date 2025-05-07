@@ -8,10 +8,12 @@ spec:
   selector:
     matchLabels:
       app: {{ include "loki.fullname" . }}
+      component: querier
   template:
     metadata:
       labels:
         app: {{ include "loki.fullname" . }}
+        component: querier
     spec:
       containers:
         - name: querier
@@ -19,15 +21,18 @@ spec:
           args:
             - -target=querier
             - -config.file=/etc/loki/loki.yaml
+          ports:
+            - containerPort: 3100
+            - containerPort: 9095
           volumeMounts:
-            - name: config-volume
+            - name: config
               mountPath: /etc/loki
               readOnly: true
-            - name: data-volume
-              mountPath: /data/loki # Mount the directory where Loki will write data
+            - name: data
+              mountPath: /data/loki
       volumes:
-        - name: config-volume
+        - name: config
           configMap:
             name: {{ include "loki.fullname" . }}-config
-        - name: data-volume
-          emptyDir: {} # Optionally use a PVC for persistent storage
+        - name: data
+          emptyDir: {}  # Replace with PVC if you want persistent storage
