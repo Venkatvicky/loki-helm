@@ -1,19 +1,14 @@
 loki:
-  schemaConfig:
-    configs:
-      - from: 2024-06-01
-        store: tsdb
-        object_store: filesystem  # Changed from 's3' to 'filesystem'
-        schema: v13
-        index:
-          prefix: loki_index_
-          period: 24h
   ingester:
     chunk_encoding: snappy
   tracing:
     enabled: true
   querier:
     max_concurrent: 4
+
+  storage_config:
+    filesystem:
+      directory: /data/loki/chunks  # Directory for storing Loki chunks
 
 deploymentMode: SimpleScalable
 
