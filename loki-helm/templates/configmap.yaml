@@ -30,7 +30,7 @@ data:
         - from: 2024-06-01
           store: tsdb
           object_store: filesystem
-          schema: v13
+          schema: v12  # ✅ corrected
           index:
             prefix: loki_index_
             period: 24h
