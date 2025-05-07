@@ -1,61 +1,105 @@
-loki:
-  enabled: true
-  config: 
-    auth_enabled: false
+# Loki Helm Chart Values for Distributed Mode
 
+loki:
+  config:
+    auth_enabled: false
     server:
       http_listen_port: 3100
       grpc_listen_port: 9095
-
+    common:
+      path_prefix: /data
+      storage:
+        filesystem:
+          directory: /data/loki/chunks
+      replication_factor: 1
+      ring:
+        kvstore:
+          store: memberlist
     schema_config:
       configs:
-        - from: 2024-06-01
-          store: tsdb
+        - from: 2022-01-01
+          store: boltdb-shipper
           object_store: filesystem
-          schema: v12
+          schema: v11
           index:
-            prefix: loki_index_
+            prefix: index_
             period: 24h
-
     storage_config:
+      boltdb_shipper:
+        active_index_directory: /data/loki/index
+        cache_location: /data/loki/cache
+        shared_store: filesystem
       filesystem:
-        directory: /data/loki
-
+        directory: /data/loki/chunks
+    limits_config:
+      enforce_metric_name: false
+      reject_old_samples: true
+      reject_old_samples_max_age: 168h
     chunk_store_config:
       max_look_back_period: 0s
-
     table_manager:
       retention_deletes_enabled: true
       retention_period: 168h
 
-    querier:
-      max_concurrent: 20
+  persistence:
+    enabled: true
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+    storageClassName: gp3-csi
 
-  storage:
-    type: filesystem
-    filesystem:
-      directory: /data/loki
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: http
 
-persistence:
+ingress:
   enabled: true
-  storageClassName: gp3-csi  # change as per your cluster
-  accessModes:
-    - ReadWriteOnce
-  size: 10Gi
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+  hosts:
+    - host: loki.example.com  # Replace with your domain
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: loki-tls-secret
+      hosts:
+        - loki.example.com
 
-volumeMounts:
-  - name: storage
-    mountPath: /data/loki
+serviceAccount:
+  create: true
+  name: loki-sa
 
-volumes:
-  - name: storage
-    persistentVolumeClaim:
-      claimName: loki-pvc
-
-resources: 
+resources:
   limits:
-    memory: 512Mi
     cpu: 500m
+    memory: 512Mi
   requests:
+    cpu: 200m
     memory: 256Mi
-    cpu: 100m
+
+replicas:
+  distributor: 1
+  ingester: 1
+  querier: 1
+  queryFrontend: 1
+  compactor: 1
+  ruler: 0  # Set to 1 if you need ruler
+
+image:
+  repository: grafana/loki
+  tag: "2.6.0"
+  pullPolicy: IfNotPresent
+
+# Optional security context if using NFS or read-only ConfigMaps
+securityContext:
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+
+# Use this if you're mounting custom config via initContainer
+initContainers: []
