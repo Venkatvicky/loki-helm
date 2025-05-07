@@ -3,14 +3,14 @@ loki:
     configs:
       - from: 2024-06-01
         store: tsdb
-        object_store: filesystem  # Using filesystem for local storage
+        object_store: filesystem  # filesystem for local storage
         schema: v13
         index:
           prefix: loki_index_
           period: 24h
 
   ingester:
-    chunk_encoding: snappy  # Set chunk encoding to snappy
+    chunk_encoding: snappy  # Define chunk encoding for ingester
 
   tracing:
     enabled: true  # Enable tracing for Loki
@@ -31,10 +31,10 @@ write:
   replicas: 3  # Replicas for write components
 
 minio:
-  enabled: false  # Disable Minio, not needed with local storage
+  enabled: false  # Disable Minio, as we're using local storage
 
 singleBinary:
-  replicas: 0  # No need for singleBinary in this case
+  replicas: 0  # Single binary mode is disabled
 
 ingester:
   replicas: 1  # Number of ingester replicas
@@ -60,6 +60,7 @@ bloomCompactor:
 bloomGateway:
   replicas: 0  # No need for bloomGateway unless scaling
 
+# Ingress configuration
 ingress:
   enabled: true  # Set to true to enable ingress
   host: loki.cloudmasa.com  # Set your actual hostname here
@@ -69,16 +70,23 @@ ingress:
   ingressClassName: "nginx"  # Set ingress class if you're using NGINX Ingress controller
   # Add additional ingress configurations as needed
 
-# Add persistent storage configuration if you're using persistent volumes
+# Persistent storage configuration
 persistence:
-  enabled: true  # Enable persistence
-  storageClassName: "gp3"  # Set the appropriate storage class
+  enabled: true  # Enable persistence for Loki
+  storageClassName: "manual"  # This should match with PersistentVolume's storageClassName
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteOnce  # Access mode for the volume
   resources:
     requests:
-      storage: 50Gi  # Set storage size (adjust as needed)
+      storage: 10Gi  # Set storage size (ensure it matches the PersistentVolume size)
 
-# Optional: For monitoring or alerts (if applicable)
-alertmanager:
-  enabled: false  # Disable Alertmanager if not using
+# Resources section
+resources:
+  limits:
+    cpu: "1"
+    memory: "2Gi"
+  requests:
+    cpu: "500m"
+    memory: "1Gi"
+
+# Additional Loki configuration, can be extended based on your requirements
