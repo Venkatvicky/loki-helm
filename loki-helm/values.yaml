@@ -1,6 +1,6 @@
 loki:
   enabled: true
-  config: 
+  config:
     auth_enabled: false
 
     server:
@@ -30,6 +30,7 @@ loki:
 
     querier:
       max_concurrent: 20
+      replicas: 2  # <-- Added replicas here
 
   storage:
     type: filesystem
@@ -78,4 +79,4 @@ ingress:
         - loki.example.com  # Replace with your domain
 
 queryFrontend:
-  replicas: 2  # Set the replicas for query frontend
+  replicas: 2
