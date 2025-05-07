@@ -35,9 +35,14 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /etc/loki
+              readOnly: true
+            - name: data
+              mountPath: /data/loki
           resources:
             {{- toYaml .Values.global.resources | nindent 12 }}
       volumes:
         - name: config
           configMap:
             name: {{ include "loki.fullname" . }}-config
+        - name: data
+          emptyDir: {}
