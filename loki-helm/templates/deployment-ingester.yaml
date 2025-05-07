@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "loki.fullname" . }}-ingester
+  labels:
+    app: {{ include "loki.fullname" . }}
 spec:
   replicas: {{ .Values.ingester.replicas }}
   selector:
@@ -12,6 +14,8 @@ spec:
       labels:
         app: {{ include "loki.fullname" . }}
     spec:
+      securityContext:
+        fsGroup: 1000  # Ensure the volume's file system group is accessible
       containers:
         - name: ingester
           image: grafana/loki:{{ .Chart.AppVersion }}
@@ -22,7 +26,12 @@ spec:
             - name: config-volume
               mountPath: /etc/loki
               readOnly: true
+            - name: loki-data
+              mountPath: /data  # Mounting the persistent volume to /data
       volumes:
         - name: config-volume
           configMap:
             name: {{ include "loki.fullname" . }}-config
+        - name: loki-data
+          persistentVolumeClaim:
+            claimName: loki-data-pvc  # You need to define the PVC separately
