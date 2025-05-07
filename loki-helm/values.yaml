@@ -1,57 +1,64 @@
-# Loki Helm Chart Values for Distributed Mode
-
 loki:
-  config:
+  enabled: true
+  config: 
     auth_enabled: false
+
     server:
       http_listen_port: 3100
       grpc_listen_port: 9095
-    common:
-      path_prefix: /data
-      storage:
-        filesystem:
-          directory: /data/loki/chunks
-      replication_factor: 1
-      ring:
-        kvstore:
-          store: memberlist
+
     schema_config:
       configs:
-        - from: 2022-01-01
-          store: boltdb-shipper
+        - from: 2024-06-01
+          store: tsdb
           object_store: filesystem
-          schema: v11
+          schema: v12
           index:
-            prefix: index_
+            prefix: loki_index_
             period: 24h
+
     storage_config:
-      boltdb_shipper:
-        active_index_directory: /data/loki/index
-        cache_location: /data/loki/cache
-        shared_store: filesystem
       filesystem:
-        directory: /data/loki/chunks
-    limits_config:
-      enforce_metric_name: false
-      reject_old_samples: true
-      reject_old_samples_max_age: 168h
+        directory: /data/loki
+
     chunk_store_config:
       max_look_back_period: 0s
+
     table_manager:
       retention_deletes_enabled: true
       retention_period: 168h
 
-  persistence:
-    enabled: true
-    accessModes:
-      - ReadWriteOnce
-    size: 10Gi
-    storageClassName: gp3-csi
+    querier:
+      max_concurrent: 20
 
-  readinessProbe:
-    httpGet:
-      path: /ready
-      port: http
+  storage:
+    type: filesystem
+    filesystem:
+      directory: /data/loki
+
+persistence:
+  enabled: true
+  storageClassName: gp3-csi  # change as per your cluster
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
+
+volumeMounts:
+  - name: storage
+    mountPath: /data/loki
+
+volumes:
+  - name: storage
+    persistentVolumeClaim:
+      claimName: loki-pvc
+
+resources: 
+  limits:
+    memory: 512Mi
+    cpu: 500m
+  requests:
+    memory: 256Mi
+    cpu: 100m
 
 ingress:
   enabled: true
@@ -68,38 +75,7 @@ ingress:
   tls:
     - secretName: loki-tls-secret
       hosts:
-        - loki.example.com
+        - loki.example.com  # Replace with your domain
 
-serviceAccount:
-  create: true
-  name: loki-sa
-
-resources:
-  limits:
-    cpu: 500m
-    memory: 512Mi
-  requests:
-    cpu: 200m
-    memory: 256Mi
-
-replicas:
-  distributor: 1
-  ingester: 1
-  querier: 1
-  queryFrontend: 1
-  compactor: 1
-  ruler: 0  # Set to 1 if you need ruler
-
-image:
-  repository: grafana/loki
-  tag: "2.6.0"
-  pullPolicy: IfNotPresent
-
-# Optional security context if using NFS or read-only ConfigMaps
-securityContext:
-  runAsUser: 10001
-  runAsGroup: 10001
-  fsGroup: 10001
-
-# Use this if you're mounting custom config via initContainer
-initContainers: []
+queryFrontend:
+  replicas: 2  # Set the replicas for query frontend
