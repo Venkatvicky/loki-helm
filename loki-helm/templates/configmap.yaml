@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ include "loki.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
 data:
   loki.yaml: |
     server:
@@ -13,7 +14,6 @@ data:
       ring:
         kvstore:
           store: inmemory
-      shard_by_all_labels: true
 
     storage_config:
       boltdb_shipper:
