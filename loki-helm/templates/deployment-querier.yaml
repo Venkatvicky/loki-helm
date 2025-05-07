@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "loki.fullname" . }}-querier
+spec:
+  replicas: {{ .Values.querier.replicas }}
+  selector:
+    matchLabels:
+      app: {{ include "loki.fullname" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "loki.fullname" . }}
+    spec:
+      containers:
+        - name: querier
+          image: grafana/loki:{{ .Chart.AppVersion }}
+          args:
+            - -target=querier
+            - -config.file=/etc/loki/loki.yaml
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/loki
+              readOnly: true
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ include "loki.fullname" . }}-config
