@@ -23,7 +23,11 @@ spec:
             - name: config-volume
               mountPath: /etc/loki
               readOnly: true
+            - name: data-volume
+              mountPath: /data/loki # Mount the directory where Loki will write data
       volumes:
         - name: config-volume
           configMap:
             name: {{ include "loki.fullname" . }}-config
+        - name: data-volume
+          emptyDir: {} # Optionally use a PVC for persistent storage
