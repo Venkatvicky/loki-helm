@@ -22,9 +22,11 @@ data:
 
     storage_config:
       boltdb_shipper:
-        active_index_directory: /tmp/loki/index
-        cache_location: /tmp/loki/cache
+        active_index_directory: /data/loki/index
+        cache_location: /data/loki/cache
         resync_interval: 1m
+      filesystem:
+        directory: /data/loki/chunks
 
     schema_config:
       configs:
