@@ -7,4 +7,5 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi
+      storage: 10Gi  # Match with the PersistentVolume size
+  storageClassName: manual  # Ensure this matches the PV's storage class
