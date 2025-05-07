@@ -17,10 +17,10 @@ global:
 
   resources:
     limits:
-      cpu: 500m
-      memory: 1Gi
-    requests:
       cpu: 100m
+      memory: 256Gi
+    requests:
+      cpu: 500m
       memory: 512Mi
 
   # For distributed deployment
