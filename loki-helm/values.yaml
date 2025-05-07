@@ -3,15 +3,11 @@ loki:
     configs:
       - from: 2024-06-01
         store: tsdb
-        object_store: filesystem
+        object_store: filesystem  # Use 'filesystem' for local storage
         schema: v13
         index:
           prefix: loki_index_
           period: 24h
-
-  alerting:
-    alertmanager_config:
-      api_url: http://alertmanager:9093  # Only if you're using Alertmanager for alerts
 
   ingester:
     chunk_encoding: snappy
@@ -22,10 +18,7 @@ loki:
   querier:
     max_concurrent: 4
 
-  queryrange:
-    results_cache:
-      enabled: true
-      expiration: 5m  # Optional caching for query results
+  # Removed alertmanager_config and queryrange configurations that were causing issues
 
 deploymentMode: SimpleScalable
 
@@ -39,7 +32,7 @@ write:
   replicas: 3
 
 minio:
-  enabled: false  # Disable Minio since we're using filesystem storage
+  enabled: false  # No need for Minio if you're using filesystem storage
 
 singleBinary:
   replicas: 0
