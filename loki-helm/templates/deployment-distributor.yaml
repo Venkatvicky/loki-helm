@@ -29,4 +29,3 @@ spec:
         - name: config-volume
           configMap:
             name: {{ include "loki.fullname" . }}-config
-            # Ensure the configMap is correctly referenced
