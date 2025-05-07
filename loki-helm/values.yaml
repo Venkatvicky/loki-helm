@@ -1,86 +1,119 @@
 loki:
-  schemaConfig:
+  auth_enabled: false
+
+  server:
+    http_listen_port: 3100
+
+  distributor:
+    ring:
+      kvstore:
+        store: memberlist
+
+  ingester:
+    lifecycler:
+      ring:
+        kvstore:
+          store: memberlist
+        replication_factor: 1
+      final_sleep: 0s
+    chunk_encoding: snappy
+    chunk_idle_period: 5m
+    max_chunk_age: 1h
+    chunk_target_size: 1048576
+    chunk_retain_period: 30s
+
+  schema_config:
     configs:
       - from: 2024-06-01
         store: tsdb
-        object_store: filesystem  # filesystem for local storage
-        schema: v13
+        object_store: filesystem
+        schema: v12  # Corrected from v13 to v12
         index:
           prefix: loki_index_
           period: 24h
 
-  ingester:
-    chunk_encoding: snappy  # Define chunk encoding for ingester
+  storage_config:
+    filesystem:
+      directory: /data/loki
+
+  compactor:
+    working_directory: /data/compactor
+    shared_store: filesystem
+
+  limits_config:
+    enforce_metric_name: false
+    reject_old_samples: true
+    reject_old_samples_max_age: 168h
+
+  chunk_store_config:
+    max_look_back_period: 0s
+
+  table_manager:
+    retention_deletes_enabled: true
+    retention_period: 168h
 
   tracing:
-    enabled: true  # Enable tracing for Loki
+    enabled: true
 
   querier:
-    max_concurrent: 4  # Max concurrent queries
+    max_concurrent: 4
 
-deploymentMode: SimpleScalable  # Set deployment mode for scalable Loki setup
+deploymentMode: SimpleScalable
 
-# Number of replicas for different components in the Loki deployment
 backend:
-  replicas: 3  # Replicas for backend components
+  replicas: 3
 
 read:
-  replicas: 3  # Replicas for read components
+  replicas: 3
 
 write:
-  replicas: 3  # Replicas for write components
+  replicas: 3
 
 minio:
-  enabled: false  # Disable Minio, as we're using local storage
+  enabled: false
 
 singleBinary:
-  replicas: 0  # Single binary mode is disabled
+  replicas: 0
 
 ingester:
-  replicas: 1  # Number of ingester replicas
+  replicas: 1
 
 querier:
-  replicas: 1  # Number of querier replicas
+  replicas: 1
 
 queryFrontend:
-  replicas: 1  # Number of queryFrontend replicas
+  replicas: 1
 
 distributor:
-  replicas: 1  # Number of distributor replicas
+  replicas: 1
 
 compactor:
-  replicas: 0  # No need for compactor unless scaling
+  replicas: 0
 
 indexGateway:
-  replicas: 0  # No need for indexGateway unless scaling
+  replicas: 0
 
 bloomCompactor:
-  replicas: 0  # No need for bloomCompactor unless scaling
+  replicas: 0
 
 bloomGateway:
-  replicas: 0  # No need for bloomGateway unless scaling
+  replicas: 0
 
-# Ingress configuration
 ingress:
-  enabled: true  # Set to true to enable ingress
-  host: loki.cloudmasa.com  # Set your actual hostname here
+  enabled: true
+  host: loki.cloudmasa.com
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: "/"
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"  # Disable SSL redirect if not using SSL
-  ingressClassName: "nginx"  # Set ingress class if you're using NGINX Ingress controller
-  # Add additional ingress configurations as needed
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  ingressClassName: "nginx"
 
-# Persistent storage configuration
 persistence:
-  enabled: true  # Enable persistence for Loki
-  storageClassName: "manual"  # This should match with PersistentVolume's storageClassName
+  enabled: true
+  storageClassName: "manual"
   accessModes:
-    - ReadWriteOnce  # Access mode for the volume
-  resources:
-    requests:
-      storage: 10Gi  # Set storage size (ensure it matches the PersistentVolume size)
+    - ReadWriteOnce
+  size: 10Gi
 
-# Resources section
 resources:
   limits:
     cpu: "1"
@@ -88,5 +121,3 @@ resources:
   requests:
     cpu: "500m"
     memory: "1Gi"
-
-# Additional Loki configuration, can be extended based on your requirements
