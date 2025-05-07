@@ -10,84 +10,75 @@ loki:
           period: 24h
 
   ingester:
-    chunk_encoding: snappy
-    replicas: 1  # Set the number of ingesters
+    chunk_encoding: snappy  # Set chunk encoding to snappy
 
   tracing:
-    enabled: true
+    enabled: true  # Enable tracing for Loki
 
   querier:
-    max_concurrent: 4
+    max_concurrent: 4  # Max concurrent queries
 
-  distributor:
-    replicas: 1  # Number of distributor replicas
-    resources:
-      requests:
-        memory: "512Mi"
-        cpu: "500m"
-      limits:
-        memory: "1Gi"
-        cpu: "1"
+deploymentMode: SimpleScalable  # Set deployment mode for scalable Loki setup
 
-  compactor:
-    replicas: 0  # Set compactor replicas to 0 if you don't need it
+# Number of replicas for different components in the Loki deployment
+backend:
+  replicas: 3  # Replicas for backend components
 
-  indexGateway:
-    replicas: 0  # Set indexGateway replicas to 0 if you don't need it
+read:
+  replicas: 3  # Replicas for read components
 
-  bloomCompactor:
-    replicas: 0  # Set bloomCompactor replicas to 0 if you don't need it
+write:
+  replicas: 3  # Replicas for write components
 
-  bloomGateway:
-    replicas: 0  # Set bloomGateway replicas to 0 if you don't need it
+minio:
+  enabled: false  # Disable Minio, not needed with local storage
 
-  minio:
-    enabled: false  # Minio is disabled since we are using filesystem for storage
+singleBinary:
+  replicas: 0  # No need for singleBinary in this case
 
-  read:
-    replicas: 3
+ingester:
+  replicas: 1  # Number of ingester replicas
 
-  write:
-    replicas: 3
+querier:
+  replicas: 1  # Number of querier replicas
 
-  backend:
-    replicas: 3  # Number of backend replicas
+queryFrontend:
+  replicas: 1  # Number of queryFrontend replicas
 
-  singleBinary:
-    replicas: 0  # No single binary deployment
+distributor:
+  replicas: 1  # Number of distributor replicas
 
-  ingress:
-    enabled: true
-    host: loki.cloudmasa.com  # Update this with your actual hostname
-    annotations:
-      nginx.ingress.kubernetes.io/rewrite-target: "/"  # In case you need to rewrite URL paths
-      nginx.ingress.kubernetes.io/ssl-redirect: "false"  # Disable SSL redirect if not using HTTPS
-    ingressClassName: "nginx"  # Make sure the ingress controller class matches your setup
+compactor:
+  replicas: 0  # No need for compactor unless scaling
 
-  storageConfig:
-    filesystem:
-      directory: /loki/chunks  # Ensure Loki stores its chunks in the filesystem
-    boltdb_shipper:
-      active_index_directory: /loki/index  # Index storage path
-      cache_location: /loki/cache  # Cache storage path
-      cache_ttl: 1h  # TTL for the cache
+indexGateway:
+  replicas: 0  # No need for indexGateway unless scaling
 
-  persistence:
-    enabled: true
-    storageClassName: "gp3-csi"  # Adjust to your cluster's storage class (if applicable)
-    accessMode: ReadWriteOnce
-    size: 50Gi  # Adjust the size based on your needs
+bloomCompactor:
+  replicas: 0  # No need for bloomCompactor unless scaling
 
-  # Enable Loki's various components
-  components:
-    - distributor
-    - ingester
-    - querier
-    - queryFrontend
-    - compactor
+bloomGateway:
+  replicas: 0  # No need for bloomGateway unless scaling
 
-# Disable unneeded components
-disableCompactor: true
-disableIndexGateway: true
-disableBloomCompactor: true
-disableBloomGateway: true
+ingress:
+  enabled: true  # Set to true to enable ingress
+  host: loki.cloudmasa.com  # Set your actual hostname here
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: "/"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"  # Disable SSL redirect if not using SSL
+  ingressClassName: "nginx"  # Set ingress class if you're using NGINX Ingress controller
+  # Add additional ingress configurations as needed
+
+# Add persistent storage configuration if you're using persistent volumes
+persistence:
+  enabled: true  # Enable persistence
+  storageClassName: "gp3"  # Set the appropriate storage class
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi  # Set storage size (adjust as needed)
+
+# Optional: For monitoring or alerts (if applicable)
+alertmanager:
+  enabled: false  # Disable Alertmanager if not using
