@@ -1,130 +1,61 @@
 loki:
-  schemaConfig:
-    configs:
-      - from: 2024-06-01
-        store: tsdb
-        object_store: filesystem  # filesystem for local storage
-        schema: v12               # ✅ Fixed: use valid schema version
-        index:
-          prefix: loki_index_
-          period: 24h
+  enabled: true
+  config: 
+    auth_enabled: false
 
-  ingester:
-    chunk_encoding: snappy  # Define chunk encoding for ingester
+    server:
+      http_listen_port: 3100
+      grpc_listen_port: 9095
 
-  tracing:
-    enabled: true  # Enable tracing for Loki
+    schema_config:
+      configs:
+        - from: 2024-06-01
+          store: tsdb
+          object_store: filesystem
+          schema: v12
+          index:
+            prefix: loki_index_
+            period: 24h
 
-  querier:
-    max_concurrent: 4  # Max concurrent queries
+    storage_config:
+      filesystem:
+        directory: /data/loki
 
-deploymentMode: SimpleScalable  # Set deployment mode for scalable Loki setup
+    chunk_store_config:
+      max_look_back_period: 0s
 
-# Number of replicas for different components in the Loki deployment
-backend:
-  replicas: 3  # Replicas for backend components
+    table_manager:
+      retention_deletes_enabled: true
+      retention_period: 168h
 
-read:
-  replicas: 3  # Replicas for read components
+    querier:
+      max_concurrent: 20
 
-write:
-  replicas: 3  # Replicas for write components
+  storage:
+    type: filesystem
+    filesystem:
+      directory: /data/loki
 
-minio:
-  enabled: false  # Disable Minio, as we're using local storage
-
-singleBinary:
-  replicas: 0  # Single binary mode is disabled
-
-ingester:
-  replicas: 1  # Number of ingester replicas
-
-querier:
-  replicas: 1  # Number of querier replicas
-
-queryFrontend:
-  replicas: 1  # Number of queryFrontend replicas
-
-distributor:
-  replicas: 1  # Number of distributor replicas
-
-compactor:
-  replicas: 0  # No need for compactor unless scaling
-
-indexGateway:
-  replicas: 0  # No need for indexGateway unless scaling
-
-bloomCompactor:
-  replicas: 0  # No need for bloomCompactor unless scaling
-
-bloomGateway:
-  replicas: 0  # No need for bloomGateway unless scaling
-
-# Ingress configuration
-ingress:
-  enabled: true  # Set to true to enable ingress
-  host: loki.cloudmasa.com  # Set your actual hostname here
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: "/"
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
-  ingressClassName: "nginx"
-
-# Persistent storage configuration
 persistence:
   enabled: true
-  storageClassName: "manual"  # Match this with your PV's storageClassName
+  storageClassName: gp3-csi  # change as per your cluster
   accessModes:
     - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
-  # Ensure volume permissions are correct by setting security context
-  securityContext:
-    fsGroup: 10001  # Ensure the correct file system group to avoid permission issues
+  size: 10Gi
 
-# Resources section
-resources:
-  limits:
-    cpu: "1"
-    memory: "2Gi"
-  requests:
-    cpu: "500m"
-    memory: "1Gi"
+volumeMounts:
+  - name: storage
+    mountPath: /data/loki
 
-# Additional Loki configuration for better storage and security
-extraVolumeMounts:
-  - name: loki-data
-    mountPath: /data  # Path to be mounted in the Loki container
-extraVolumes:
-  - name: loki-data
+volumes:
+  - name: storage
     persistentVolumeClaim:
-      claimName: loki-pvc  # Make sure PVC name matches
+      claimName: loki-pvc
 
-# PersistentVolumeClaim definition for data storage (manual PV setup)
-persistentVolumeClaim:
-  enabled: true
-  storageClassName: "manual"  # Match this with your storage class name
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
-
-# Security Context for Loki to ensure it runs with correct user/group permissions
-securityContext:
-  runAsUser: 10001  # User ID for Loki container (ensure Loki has correct permissions)
-  fsGroup: 10001     # Group ID for Loki container (ensure it has permissions to write to the mounted volume)
-
-# Loki's storage setup in Kubernetes
-persistence:
-  enabled: true
-  storageClassName: "manual"  # Should match with your actual PV's storage class
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
-  # Optionally, set owner for persistent volumes (if required)
-  volumePermissions:
-    enabled: true  # Enable volume permissions
-    fsGroup: 10001  # Specify the correct fsGroup to allow Loki container to access the volume
+resources: 
+  limits:
+    memory: 512Mi
+    cpu: 500m
+  requests:
+    memory: 256Mi
+    cpu: 100m
