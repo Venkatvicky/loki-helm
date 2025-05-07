@@ -2,6 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "loki.fullname" . }}-distributor
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "loki.fullname" . }}
 spec:
   replicas: {{ .Values.distributor.replicas }}
   selector:
@@ -26,3 +29,4 @@ spec:
         - name: config-volume
           configMap:
             name: {{ include "loki.fullname" . }}-config
+            # Ensure the configMap is correctly referenced
