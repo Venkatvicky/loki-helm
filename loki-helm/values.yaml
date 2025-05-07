@@ -3,7 +3,7 @@ loki:
     configs:
       - from: 2024-06-01
         store: tsdb
-        object_store: s3
+        object_store: filesystem  # Changed from 's3' to 'filesystem'
         schema: v13
         index:
           prefix: loki_index_
@@ -27,7 +27,7 @@ write:
   replicas: 3
 
 minio:
-  enabled: true
+  enabled: false  # Disable Minio since we no longer need it for local storage
 
 singleBinary:
   replicas: 0
