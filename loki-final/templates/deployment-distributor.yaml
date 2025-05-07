@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "loki.fullname" . }}-distributor
+  labels:
+    {{- include "loki.labels" . | nindent 4 }}
+    component: distributor
+spec:
+  replicas: {{ .Values.global.components.distributor.replicas }}
+  selector:
+    matchLabels:
+      {{- include "loki.selectorLabels" . | nindent 6 }}
+      component: distributor
+  template:
+    metadata:
+      labels:
+        {{- include "loki.selectorLabels" . | nindent 8 }}
+        component: distributor
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3100"
+    spec:
+      serviceAccountName: {{ include "loki.serviceAccountName" . }}
+      containers:
+        - name: distributor
+          image: "{{ .Values.global.image.repository }}:{{ .Values.global.image.tag }}"
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+          args:
+            - "-target=distributor"
+            - "-config.file=/etc/loki/loki.yaml"
+          ports:
+            - name: http-metrics
+              containerPort: 3100
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /etc/loki
+          resources:
+            {{- toYaml .Values.global.resources | nindent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "loki.fullname" . }}-config

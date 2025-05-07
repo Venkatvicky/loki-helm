@@ -1,0 +1,99 @@
+# Default values for loki.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+global:
+  image:
+    repository: grafana/loki
+    tag: 2.9.1
+    pullPolicy: IfNotPresent
+
+  persistence:
+    enabled: true
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+    storageClassName: standard
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 512Mi
+
+  # For distributed deployment
+  components:
+    distributor:
+      replicas: 2
+    querier:
+      replicas: 2
+    query_frontend:
+      replicas: 2
+    ingester:
+      replicas: 3
+
+config:
+  auth_enabled: false
+  ingester:
+    lifecycler:
+      ring:
+        kvstore:
+          store: inmemory
+        replication_factor: 3
+    chunk_idle_period: 3m
+    max_transfer_retries: 0
+  limits_config:
+    enforce_metric_name: false
+    reject_old_samples: true
+    reject_old_samples_max_age: 168h
+  schema_config:
+    configs:
+      - from: 2020-10-24
+        store: boltdb-shipper
+        object_store: filesystem
+        schema: v11
+        index:
+          prefix: index_
+          period: 24h
+  server:
+    http_listen_port: 3100
+  storage_config:
+    boltdb_shipper:
+      active_index_directory: /var/loki/index
+      cache_location: /var/loki/boltdb-cache
+      shared_store: filesystem
+    filesystem:
+      directory: /var/loki/chunks
+
+serviceMonitor:
+  enabled: true
+  additionalLabels:
+    release: prometheus-operator
+  interval: 30s
+  scrapeTimeout: 30s
+
+ingress:
+  enabled: false
+  annotations: {}
+  hosts:
+    - host: loki.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+serviceAccount:
+  create: true
+  annotations: {}
+
+rbac:
+  create: true
+
+podDisruptionBudget:
+  enabled: true
+  maxUnavailable: 1
+
+networkPolicy:
+  enabled: false

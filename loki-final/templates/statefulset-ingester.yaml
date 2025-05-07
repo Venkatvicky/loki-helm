@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "loki.fullname" . }}-ingester
+  labels:
+    {{- include "loki.labels" . | nindent 4 }}
+    component: ingester
+spec:
+  serviceName: {{ include "loki.fullname" . }}-ingester
+  replicas: {{ .Values.global.components.ingester.replicas }}
+  selector:
+    matchLabels:
+      {{- include "loki.selectorLabels" . | nindent 6 }}
+      component: ingester
+  template:
+    metadata:
+      labels:
+        {{- include "loki.selectorLabels" . | nindent 8 }}
+        component: ingester
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3100"
+    spec:
+      serviceAccountName: {{ include "loki.serviceAccountName" . }}
+      containers:
+        - name: ingester
+          image: "{{ .Values.global.image.repository }}:{{ .Values.global.image.tag }}"
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+          args:
+            - "-target=ingester"
+            - "-config.file=/etc/loki/loki.yaml"
+          ports:
+            - name: http-metrics
+              containerPort: 3100
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /etc/loki
+            - name: storage
+              mountPath: /var/loki
+          resources:
+            {{- toYaml .Values.global.resources | nindent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "loki.fullname" . }}-config
+  volumeClaimTemplates:
+    - metadata:
+        name: storage
+      spec:
+        accessModes: {{ .Values.global.persistence.accessModes }}
+        resources:
+          requests:
+            storage: {{ .Values.global.persistence.size }}
+        {{- if .Values.global.persistence.storageClassName }}
+        storageClassName: {{ .Values.global.persistence.storageClassName }}
+        {{- end }}

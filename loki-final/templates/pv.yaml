@@ -1,0 +1,29 @@
+{{- if and .Values.global.persistence.enabled (not .Values.global.persistence.storageClassName) }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ include "loki.fullname" . }}-pv
+  labels:
+    {{- include "loki.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  capacity:
+    storage: {{ .Values.global.persistence.size }}
+  accessModes:
+    {{- toYaml .Values.global.persistence.accessModes | nindent 4 }}
+  persistentVolumeReclaimPolicy: Retain
+  {{- if eq (index .Values.global.persistence.accessModes 0) "ReadWriteOnce" }}
+  hostPath:
+    path: /data/{{ include "loki.fullname" . }}-storage
+    type: DirectoryOrCreate
+  {{- else if eq (index .Values.global.persistence.accessModes 0) "ReadWriteMany" }}
+  nfs:
+    server: nfs-server.example.com
+    path: /exports/{{ include "loki.fullname" . }}
+  {{- end }}
+  storageClassName: ""
+  claimRef:
+    namespace: {{ .Release.Namespace }}
+    name: {{ include "loki.fullname" . }}-storage
+{{- end }}
